@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ToDoList - dark palette and state marker options</title>
+<style>
+  /* Four dark palettes. Hex values are documented here so they can be lifted.
+     A Field green:   bg #14181a  surface #1c2224  line #2c3639  text #e6ece9  muted #8a9892  accent #5fb386
+     B Graphite:      bg #16171a  surface #1e2024  line #31343a  text #e8e9ec  muted #8b8f98  accent #7fb89a
+     C Slate:         bg #12171d  surface #19212a  line #2a3541  text #e4e9ee  muted #86929f  accent #6aa6c9
+     D Warm charcoal: bg #1a1816  surface #231f1c  line #38322d  text #ece6df  muted #988f85  accent #c9a86a */
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 32px; background: #0b0c0d; color: #ddd; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 40px 0 6px; }
+  p.note { margin: 0 0 18px; color: #9aa; font-size: 14px; max-width: 760px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+  .theme { border: 1px solid #333; border-radius: 6px; overflow: hidden; }
+  .theme header { padding: 10px 14px; background: #101112; border-bottom: 1px solid #333; font-size: 14px; }
+  .theme header b { display: block; font-size: 15px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px; background: #101112; border-bottom: 1px solid #333; font-size: 11px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; color: #aaa; }
+  .chip i { width: 14px; height: 14px; display: inline-block; border: 1px solid #555; }
+
+  .A { --bg:#14181a; --surface:#1c2224; --line:#2c3639; --text:#e6ece9; --muted:#8a9892; --accent:#5fb386; }
+  .B { --bg:#16171a; --surface:#1e2024; --line:#31343a; --text:#e8e9ec; --muted:#8b8f98; --accent:#7fb89a; }
+  .C { --bg:#12171d; --surface:#19212a; --line:#2a3541; --text:#e4e9ee; --muted:#86929f; --accent:#6aa6c9; }
+  .D { --bg:#1a1816; --surface:#231f1c; --line:#38322d; --text:#ece6df; --muted:#988f85; --accent:#c9a86a; }
+
+  .app { background: var(--bg); color: var(--text); padding: 18px; }
+  .day { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; }
+  .day .head { padding: 14px 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: baseline; }
+  .day .head b { font-size: 16px; }
+  .day .head span { color: var(--muted); font-size: 13px; }
+  .group { padding: 8px 16px 2px; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+  .row { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--line); min-height: 52px; font-size: 16px; }
+  .row .due { margin-left: auto; color: var(--muted); font-size: 13px; }
+  .row.done { color: var(--muted); }
+  .row.done .t { text-decoration: line-through; text-decoration-color: var(--line); }
+  .addrow { padding: 14px 16px; }
+  .btn { display: inline-block; padding: 10px 18px; border: 1px solid var(--accent); color: var(--accent); border-radius: 4px; font-size: 15px; }
+  .focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* State markers: set 1, boxes */
+  .m { display: inline-block; width: 20px; height: 20px; flex: none; position: relative; }
+  .s1 .todo, .s1 .prog, .s1 .done { border: 2px solid currentColor; border-radius: 3px; }
+  .s1 .prog::after { content: ""; position: absolute; left: 3px; top: 3px; bottom: 3px; width: 5px; background: currentColor; }
+  .s1 .done { background: currentColor; }
+  .s1 .done::after { content: ""; position: absolute; left: 5px; top: 1px; width: 5px; height: 10px; border: solid var(--bg); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+
+  /* set 2, handwritten dash */
+  .s2 .todo::before, .s2 .prog::before, .s2 .done::before { content: ""; position: absolute; left: 1px; right: 1px; top: 10px; height: 2px; background: currentColor; }
+  .s2 .prog::after { content: ""; position: absolute; left: 8px; top: 2px; width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+  .s2 .done::after { content: ""; position: absolute; left: 9px; top: 1px; width: 2px; height: 18px; background: currentColor; }
+
+  /* set 3, circles */
+  .s3 .todo, .s3 .prog, .s3 .done { border: 2px solid currentColor; border-radius: 50%; }
+  .s3 .prog { background: linear-gradient(90deg, currentColor 50%, transparent 50%); }
+  .s3 .done { background: currentColor; }
+  .s3 .done::after { content: ""; position: absolute; left: 5px; top: 1px; width: 5px; height: 10px; border: solid var(--bg); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+
+  /* set 4, dash that fills */
+  .s4 .todo, .s4 .prog, .s4 .done { border: 2px solid currentColor; border-radius: 3px; }
+  .s4 .todo::after { content: ""; position: absolute; left: 3px; right: 3px; top: 7px; height: 2px; background: currentColor; }
+  .s4 .prog::after { content: ""; position: absolute; left: 3px; right: 3px; top: 7px; height: 2px; background: currentColor; box-shadow: 0 -5px 0 -0px transparent; }
+  .s4 .prog::before { content: ""; position: absolute; left: 7px; top: 2px; width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+  .s4 .done { background: currentColor; }
+  .s4 .done::after { content: ""; position: absolute; left: 5px; top: 1px; width: 5px; height: 10px; border: solid var(--bg); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+
+  .sets { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+  .set { background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 16px; color: var(--text); }
+  .set h3 { margin: 0 0 4px; font-size: 15px; }
+  .set p { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+  .set .row { padding: 12px 0; }
+  .set .row:last-child { border-bottom: 0; }
+</style>
+</head>
+<body>
+
+<h1>ToDoList: dark theme options</h1>
+<p class="note">Same screen in four palettes (a phone-width day, Fri Oct 30). Color is used for almost nothing: the accent marks only the Add button, the focus ring, and today's label. State is never shown by color. Done items are greyed. Overdue items are labeled with words, not color.</p>
+
+<div class="grid">
+
+  <div class="theme A">
+    <header><b>A. Field green</b>Calm, a little earthy. Greens for getting things done.</header>
+    <div class="chips">
+      <span class="chip"><i style="background:#14181a"></i>background</span>
+      <span class="chip"><i style="background:#1c2224"></i>surface</span>
+      <span class="chip"><i style="background:#2c3639"></i>line</span>
+      <span class="chip"><i style="background:#e6ece9"></i>text</span>
+      <span class="chip"><i style="background:#8a9892"></i>muted</span>
+      <span class="chip"><i style="background:#5fb386"></i>accent</span>
+    </div>
+    <div class="app s1">
+      <div class="day">
+        <div class="head"><b>Fri Oct 30</b><span style="color:var(--accent)">Today</span></div>
+        <div class="group">Overdue</div>
+        <div class="row"><span class="m todo"></span><span class="t">Return library books</span><span class="due">Oct 28</span></div>
+        <div class="group">Today</div>
+        <div class="row"><span class="m prog"></span><span class="t">Call plumber</span></div>
+        <div class="row"><span class="m todo"></span><span class="t">Email landlord</span></div>
+        <div class="row done"><span class="m done"></span><span class="t">Buy milk</span></div>
+        <div class="addrow"><span class="btn focus">Add</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="theme B">
+    <header><b>B. Graphite</b>Neutral and quiet. The least colorful option.</header>
+    <div class="chips">
+      <span class="chip"><i style="background:#16171a"></i>background</span>
+      <span class="chip"><i style="background:#1e2024"></i>surface</span>
+      <span class="chip"><i style="background:#31343a"></i>line</span>
+      <span class="chip"><i style="background:#e8e9ec"></i>text</span>
+      <span class="chip"><i style="background:#8b8f98"></i>muted</span>
+      <span class="chip"><i style="background:#7fb89a"></i>accent</span>
+    </div>
+    <div class="app s1">
+      <div class="day">
+        <div class="head"><b>Fri Oct 30</b><span style="color:var(--accent)">Today</span></div>
+        <div class="group">Overdue</div>
+        <div class="row"><span class="m todo"></span><span class="t">Return library books</span><span class="due">Oct 28</span></div>
+        <div class="group">Today</div>
+        <div class="row"><span class="m prog"></span><span class="t">Call plumber</span></div>
+        <div class="row"><span class="m todo"></span><span class="t">Email landlord</span></div>
+        <div class="row done"><span class="m done"></span><span class="t">Buy milk</span></div>
+        <div class="addrow"><span class="btn focus">Add</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="theme C">
+    <header><b>C. Slate</b>Cool and technical. A blue-grey accent.</header>
+    <div class="chips">
+      <span class="chip"><i style="background:#12171d"></i>background</span>
+      <span class="chip"><i style="background:#19212a"></i>surface</span>
+      <span class="chip"><i style="background:#2a3541"></i>line</span>
+      <span class="chip"><i style="background:#e4e9ee"></i>text</span>
+      <span class="chip"><i style="background:#86929f"></i>muted</span>
+      <span class="chip"><i style="background:#6aa6c9"></i>accent</span>
+    </div>
+    <div class="app s1">
+      <div class="day">
+        <div class="head"><b>Fri Oct 30</b><span style="color:var(--accent)">Today</span></div>
+        <div class="group">Overdue</div>
+        <div class="row"><span class="m todo"></span><span class="t">Return library books</span><span class="due">Oct 28</span></div>
+        <div class="group">Today</div>
+        <div class="row"><span class="m prog"></span><span class="t">Call plumber</span></div>
+        <div class="row"><span class="m todo"></span><span class="t">Email landlord</span></div>
+        <div class="row done"><span class="m done"></span><span class="t">Buy milk</span></div>
+        <div class="addrow"><span class="btn focus">Add</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="theme D">
+    <header><b>D. Warm charcoal</b>Softer, paper-like at night. A muted gold accent.</header>
+    <div class="chips">
+      <span class="chip"><i style="background:#1a1816"></i>background</span>
+      <span class="chip"><i style="background:#231f1c"></i>surface</span>
+      <span class="chip"><i style="background:#38322d"></i>line</span>
+      <span class="chip"><i style="background:#ece6df"></i>text</span>
+      <span class="chip"><i style="background:#988f85"></i>muted</span>
+      <span class="chip"><i style="background:#c9a86a"></i>accent</span>
+    </div>
+    <div class="app s1">
+      <div class="day">
+        <div class="head"><b>Fri Oct 30</b><span style="color:var(--accent)">Today</span></div>
+        <div class="group">Overdue</div>
+        <div class="row"><span class="m todo"></span><span class="t">Return library books</span><span class="due">Oct 28</span></div>
+        <div class="group">Today</div>
+        <div class="row"><span class="m prog"></span><span class="t">Call plumber</span></div>
+        <div class="row"><span class="m todo"></span><span class="t">Email landlord</span></div>
+        <div class="row done"><span class="m done"></span><span class="t">Buy milk</span></div>
+        <div class="addrow"><span class="btn focus">Add</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<h2>State markers: four ideas</h2>
+<p class="note">Each set shows not started, in progress, and done, in palette A. None use color to tell states apart; only shape does. Done also greys the text. Set 2 is your handwritten dash: a dash, a dash with a dot over it, and a dash crossed by the vertical line. I made the in-progress dot small so it reads at phone size, so judge whether it does.</p>
+
+<div class="sets A">
+
+  <div class="set s1">
+    <h3>1. Boxes</h3>
+    <p>Empty box, box with the left side filled, box filled with a check.</p>
+    <div class="row"><span class="m todo"></span><span class="t">Email landlord</span></div>
+    <div class="row"><span class="m prog"></span><span class="t">Call plumber</span></div>
+    <div class="row done"><span class="m done"></span><span class="t">Buy milk</span></div>
+  </div>
+
+  <div class="set s2">
+    <h3>2. Handwritten dash</h3>
+    <p>Dash, dash with a dot, dash crossed by a vertical line.</p>
+    <div class="row"><span class="m todo"></span><span class="t">Email landlord</span></div>
+    <div class="row"><span class="m prog"></span><span class="t">Call plumber</span></div>
+    <div class="row done"><span class="m done"></span><span class="t">Buy milk</span></div>
+  </div>
+
+  <div class="set s3">
+    <h3>3. Circles</h3>
+    <p>Empty ring, half-filled ring, filled ring with a check.</p>
+    <div class="row"><span class="m todo"></span><span class="t">Email landlord</span></div>
+    <div class="row"><span class="m prog"></span><span class="t">Call plumber</span></div>
+    <div class="row done"><span class="m done"></span><span class="t">Buy milk</span></div>
+  </div>
+
+  <div class="set s4">
+    <h3>4. Box with a dash</h3>
+    <p>Box with a dash inside, a dash and a dot, filled with a check.</p>
+    <div class="row"><span class="m todo"></span><span class="t">Email landlord</span></div>
+    <div class="row"><span class="m prog"></span><span class="t">Call plumber</span></div>
+    <div class="row done"><span class="m done"></span><span class="t">Buy milk</span></div>
+  </div>
+
+</div>
+
+</body>
+</html>
